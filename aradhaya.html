@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Happy Birthday Aradhaya! 🎂🥰 Our Precious One</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    body { 
+      margin: 0; 
+      font-family: 'Poppins', sans-serif; 
+      background: linear-gradient(135deg, #ffebee, #fff0f5, #fce4ec); 
+      color: #333; 
+      min-height: 100vh; 
+      text-align: center; 
+      overflow-y: auto;
+      position: relative;
+    }
+    #bg-canvas, #fireworks-canvas { 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      z-index: -1; 
+      pointer-events: none; 
+    }
+    #fireworks-canvas { z-index: 10; display: none; }
+    header { 
+      background: linear-gradient(rgba(255,182,193,0.7), rgba(255,105,180,0.5)); 
+      color: #fff; 
+      padding: 80px 20px; 
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.4); 
+      position: relative;
+      z-index: 5;
+    }
+    h1 { font-family: 'Dancing Script', cursive; font-size: 5rem; margin: 0; }
+    .container { 
+      max-width: 900px; 
+      margin: 40px auto; 
+      padding: 20px 20px 100px; 
+      position: relative; 
+      z-index: 5; 
+    }
+    .section { 
+      background: rgba(255,255,255,0.95); 
+      padding: 40px; 
+      border-radius: 25px; 
+      margin-bottom: 60px; 
+      box-shadow: 0 15px 40px rgba(255,105,180,0.3); 
+      display: none; 
+    }
+    .active { display: block; }
+    h2 { font-family: 'Dancing Script', cursive; font-size: 3.5rem; color: #ff69b4; }
+    button { background: #ff69b4; color: white; border: none; padding: 15px 40px; font-size: 1.2rem; border-radius: 50px; cursor: pointer; margin: 20px; box-shadow: 0 5px 15px rgba(255,105,180,0.4); }
+    button:hover { background: #ff1493; transform: scale(1.05); }
+    #candles { font-size: 8rem; margin: 30px; cursor: pointer; user-select: none; }
+    #memory-game { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; max-width: 400px; margin: 30px auto; }
+    .card { width: 80px; height: 80px; background: #ffb6c1; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; transition: transform 0.3s; }
+    .card.flipped { transform: rotateY(180deg); background: #fff; }
+    .card.matched { background: #98fb98; pointer-events: none; }
+    .hearts { font-size: 4rem; margin: 20px; }
+  </style>
+</head>
+<body>
+
+  <canvas id="bg-canvas"></canvas>
+  <canvas id="fireworks-canvas"></canvas>
+
+  <header>
+    <h1>Happy Birthday Aradhaya! 🎂🥰</h1>
+    <p>Our most precious one – from Your jiju ❤️</p>
+  </header>
+
+  <div class="container">
+
+    <div id="game1" class="section active">
+      <h2>Blow Out the Candles! 🕯️</h2>
+      <p>Click the cake 5 times!</p>
+      <div id="candles">🎂🕯️🕯️🕯️🕯️🕯️</div>
+      <p id="blowCount">Clicks needed: 5</p>
+      <button onclick="startBlowGame()">Start!</button>
+    </div>
+
+    <div id="game2" class="section">
+      <h2>Memory Match 🧠💕</h2>
+      <p>Match pairs to unlock wish!</p>
+      <div id="memory-game"></div>
+      <p id="moves">Moves: 0</p>
+    </div>
+
+    <div id="final" class="section">
+      <h2>To Our Aradhaya ✨</h2>
+      <p>My dearest Aradhaya,</p>
+      <p>We call you "Paglii" with endless love because you're our adorable, heart-melting treasure. Your smile lights up everything, and you mean the world to us.</p>
+      <p>Happy Birthday, mera pyara Aradhaya. May all your dreams come true, and know that Your jiju love you more than anything.</p>
+      <p>With infinite love & hugs,<br><strong>Your jiju</strong> 🌸🥰</p>
+      <div class="hearts">💖💕🌟</div>
+      <button onclick="launchFireworks()">Launch Fireworks!</button>
+    </div>
+
+  </div>
+
+  <script>
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const fwCanvas = document.getElementById('fireworks-canvas');
+    const fwCtx = fwCanvas.getContext('2d');
+    bgCanvas.width = fwCanvas.width = window.innerWidth;
+    bgCanvas.height = fwCanvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      bgCanvas.width = fwCanvas.width = window.innerWidth;
+      bgCanvas.height = fwCanvas.height = window.innerHeight;
+    });
+
+    // Falling items (hearts, flowers, stars)
+    class FallingItem {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * bgCanvas.width;
+        this.y = -50;
+        this.size = Math.random() * 20 + 10;
+        this.speed = Math.random() * 2 + 1;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotationSpeed = Math.random() * 0.05 - 0.025;
+        this.type = Math.floor(Math.random() * 3);
+        this.color = ['#ff69b4', '#ffb6c1', '#ffd700', '#ff1493', '#98fb98'][Math.floor(Math.random()*5)];
+      }
+      update() {
+        this.y += this.speed;
+        this.rotation += this.rotationSpeed;
+        if (this.y > bgCanvas.height + 50) this.reset();
+      }
+      draw() {
+        bgCtx.save();
+        bgCtx.translate(this.x, this.y);
+        bgCtx.rotate(this.rotation);
+        bgCtx.fillStyle = this.color;
+        bgCtx.globalAlpha = 0.7;
+        if (this.type === 0) {
+          bgCtx.beginPath();
+          bgCtx.moveTo(0, -this.size/2);
+          bgCtx.bezierCurveTo(-this.size, -this.size*1.5, -this.size*1.5, -this.size/2, 0, this.size/2);
+          bgCtx.bezierCurveTo(this.size*1.5, -this.size/2, this.size, -this.size*1.5, 0, -this.size/2);
+          bgCtx.fill();
+        } else if (this.type === 1) {
+          for (let i = 0; i < 8; i++) {
+            bgCtx.beginPath();
+            bgCtx.arc(Math.cos(i * Math.PI / 4) * this.size, Math.sin(i * Math.PI / 4) * this.size, this.size/3, 0, Math.PI*2);
+            bgCtx.fill();
+          }
+          bgCtx.fillStyle = '#ffff00';
+          bgCtx.beginPath();
+          bgCtx.arc(0, 0, this.size/2, 0, Math.PI*2);
+          bgCtx.fill();
+        } else {
+          bgCtx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            bgCtx.lineTo(Math.cos(i * 4 * Math.PI / 5) * this.size, Math.sin(i * 4 * Math.PI / 5) * this.size);
+            bgCtx.lineTo(Math.cos((i + 0.5) * 4 * Math.PI / 5) * this.size/2, Math.sin((i + 0.5) * 4 * Math.PI / 5) * this.size/2);
+          }
+          bgCtx.closePath();
+          bgCtx.fill();
+        }
+        bgCtx.restore();
+      }
+    }
+
+    const fallingItems = [];
+    for (let i = 0; i < 60; i++) fallingItems.push(new FallingItem());
+
+    function animateFalling() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      fallingItems.forEach(item => {
+        item.update();
+        item.draw();
+      });
+      requestAnimationFrame(animateFalling);
+    }
+    animateFalling();
+
+    // Entry poppers
+    function entryPoppers() {
+      confetti({
+        particleCount: 200,
+        angle: 60,
+        spread: 120,
+        origin: { x: 0, y: 1 },
+        shapes: ['circle', 'square'],
+        colors: ['#ff69b4', '#ffb6c1', '#ffd700', '#ff1493', '#98fb98', '#00ffff']
+      });
+      confetti({
+        particleCount: 200,
+        angle: 120,
+        spread: 120,
+        origin: { x: 1, y: 1 },
+        shapes: ['circle', 'square'],
+        colors: ['#ff69b4', '#ffb6c1', '#ffd700', '#ff1493', '#98fb98', '#00ffff']
+      });
+    }
+
+    // Smooth fireworks
+    function launchFireworks() {
+      fwCanvas.style.display = 'block';
+      let rockets = [];
+      let particles = [];
+
+      function createRocket() {
+        let x = Math.random() * fwCanvas.width * 0.8 + fwCanvas.width * 0.1;
+        let color = ['#ff69b4', '#ffd700', '#00ffff', '#ff1493', '#98fb98'][Math.floor(Math.random()*5)];
+        let size = rockets.length === 4 ? 5 : (rockets.length === 2 ? 1.5 : (rockets.length === 3 ? 2.5 : 3.5));
+
+        return { x, y: fwCanvas.height, targetY: fwCanvas.height * 0.2 + Math.random() * 80, color, size, done: false };
+      }
+
+      rockets.push(createRocket());
+      setTimeout(() => rockets.push(createRocket()), 400);
+      setTimeout(() => rockets.push(createRocket()), 1600);
+      setTimeout(() => rockets.push(createRocket()), 2600);
+      setTimeout(() => rockets.push(createRocket()), 3600);
+
+      function animate() {
+        fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+
+        rockets.forEach(r => {
+          if (!r.done) {
+            r.y -= 12 + Math.random() * 4;
+            fwCtx.beginPath();
+            fwCtx.moveTo(r.x, r.y + 30);
+            fwCtx.lineTo(r.x, r.y);
+            fwCtx.strokeStyle = 'yellow';
+            fwCtx.lineWidth = 6;
+            fwCtx.stroke();
+
+            if (r.y <= r.targetY) {
+              r.done = true;
+              for (let i = 0; i < r.size * 90; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let vel = Math.random() * 8 + 4;
+                particles.push({
+                  x: r.x + Math.cos(angle) * 20,
+                  y: r.y + Math.sin(angle) * 20,
+                  vx: Math.cos(angle) * vel,
+                  vy: Math.sin(angle) * vel,
+                  color: r.color,
+                  life: 180,
+                  maxLife: 180
+                });
+              }
+            }
+          }
+        });
+
+        particles = particles.filter(p => p.life > 0);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.15;
+          p.life--;
+          fwCtx.fillStyle = p.color;
+          fwCtx.globalAlpha = p.life / p.maxLife;
+          fwCtx.fillRect(p.x - 4, p.y - 4, 8, 8);
+        });
+
+        if (rockets.length === 5 && rockets[4].done) {
+          fwCtx.shadowColor = '#ffffff';
+          fwCtx.shadowBlur = 60;
+          fwCtx.textAlign = 'center';
+
+          fwCtx.font = 'bold 100px Dancing Script';
+          fwCtx.fillStyle = '#ff69b4';
+          fwCtx.fillText('Happy Birthday', fwCanvas.width/2, fwCanvas.height/2 - 70);
+
+          fwCtx.font = 'bold 130px Dancing Script';
+          fwCtx.fillStyle = '#ffffff';
+          fwCtx.fillText('Aradhaya!', fwCanvas.width/2, fwCanvas.height/2 + 20);
+
+          fwCtx.font = 'bold 45px Dancing Script';
+          fwCtx.fillStyle = '#ff69b4';
+          fwCtx.fillText('From Your jiju ❤️', fwCanvas.width/2, fwCanvas.height/2 + 110);
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    }
+
+    // Game logic
+    let blows = 0;
+    function startBlowGame() {
+      blows = 0;
+      document.getElementById('blowCount').innerText = 'Clicks needed: 5';
+      document.getElementById('candles').onclick = blowCandle;
+      entryPoppers();
+    }
+    function blowCandle() {
+      blows++;
+      document.getElementById('blowCount').innerText = `Clicks: ${blows} / 5`;
+      if (blows >= 5) {
+        alert('Yay! Unlocking next...');
+        document.getElementById('game1').classList.remove('active');
+        document.getElementById('game2').classList.add('active');
+        initMemoryGame();
+      }
+    }
+
+    const emojis = ['🎂', '🎂', '🎈', '🎈', '💖', '💖', '🕯️', '🕯️'];
+    let shuffled = emojis.sort(() => Math.random() - 0.5);
+    let selected = [];
+    let moves = 0;
+    function initMemoryGame() {
+      const gameDiv = document.getElementById('memory-game');
+      gameDiv.innerHTML = '';
+      shuffled.forEach(emoji => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.emoji = emoji;
+        card.innerHTML = '?';
+        card.addEventListener('click', () => flipCard(card));
+        gameDiv.appendChild(card);
+      });
+    }
+    function flipCard(card) {
+      if (selected.length === 2 || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      card.classList.add('flipped');
+      card.innerHTML = card.dataset.emoji;
+      selected.push(card);
+      if (selected.length === 2) {
+        moves++;
+        document.getElementById('moves').innerText = `Moves: ${moves}`;
+        setTimeout(checkMatch, 1000);
+      }
+    }
+    function checkMatch() {
+      const [c1, c2] = selected;
+      if (c1.dataset.emoji === c2.dataset.emoji) {
+        c1.classList.add('matched');
+        c2.classList.add('matched');
+        if (document.querySelectorAll('.matched').length === 8) {
+          alert('You won! 🎉 Wish unlocked!');
+          document.getElementById('game2').classList.remove('active');
+          document.getElementById('final').classList.add('active');
+        }
+      } else {
+        c1.classList.remove('flipped');
+        c2.classList.remove('flipped');
+        c1.innerHTML = '?';
+        c2.innerHTML = '?';
+      }
+      selected = [];
+    }
+
+    window.onload = () => {R
+      // No music auto-play
+    };
+  </script>
+
+</body>
+</html>
